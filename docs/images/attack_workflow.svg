@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 750" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <filter id="shadow"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.15"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/></marker>
+  </defs>
+
+  <text x="450" y="35" text-anchor="middle" font-size="22" font-weight="bold" fill="#1a1a2e">MCPoisoner — Attack Execution Workflow</text>
+  <text x="450" y="58" text-anchor="middle" font-size="13" fill="#666">5 Attack Classes × 4 LLM Backends × 3 Agent Frameworks = 60 Configurations</text>
+
+  <!-- Config selector -->
+  <rect x="200" y="75" width="500" height="50" rx="10" fill="#2c3e50" filter="url(#shadow)"/>
+  <text x="450" y="105" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Configuration: attack_class × llm_backend × agent_framework</text>
+
+  <line x1="450" y1="125" x2="450" y2="150" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Attack Class 1 -->
+  <rect x="50" y="155" width="800" height="70" rx="10" fill="#e74c3c" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="180" font-size="13" font-weight="bold" fill="white">ATTACK 1 — Description Injection</text>
+  <text x="70" y="200" font-size="11" fill="#ffeaa7">Payload: Unicode steganography (zero-width chars) carrying base64 instructions</text>
+  <text x="70" y="215" font-size="11" fill="#dfe6e9">Target: Agent decision-making layer  |  Crypto Defense: ✅ Full (Ed25519 signature invalidated)</text>
+
+  <!-- Attack Class 2 -->
+  <rect x="50" y="235" width="800" height="70" rx="10" fill="#e67e22" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="260" font-size="13" font-weight="bold" fill="white">ATTACK 2 — Tool Shadowing</text>
+  <text x="70" y="280" font-size="11" fill="#ffeaa7">Payload: Duplicate tool with identical name + enhanced description</text>
+  <text x="70" y="295" font-size="11" fill="#dfe6e9">Target: Tool routing / selection logic  |  Crypto Defense: ✅ Full (PKI rejects unsigned tools)</text>
+
+  <!-- Attack Class 3 -->
+  <rect x="50" y="315" width="800" height="70" rx="10" fill="#f39c12" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="340" font-size="13" font-weight="bold" fill="white">ATTACK 3 — Rug-Pull</text>
+  <text x="70" y="360" font-size="11" fill="#2c3e50">Payload: Dynamic description update post-approval via server-side mutation</text>
+  <text x="70" y="375" font-size="11" fill="#2c3e50">Target: Trust model / static audit  |  Crypto Defense: ✅ Full (SHA-256 baseline mismatch)</text>
+
+  <!-- Attack Class 4 -->
+  <rect x="50" y="395" width="800" height="70" rx="10" fill="#9b59b6" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="420" font-size="13" font-weight="bold" fill="white">ATTACK 4 — Return Value Poisoning</text>
+  <text x="70" y="440" font-size="11" fill="#ffeaa7">Payload: Malicious instructions embedded in tool output JSON fields</text>
+  <text x="70" y="455" font-size="11" fill="#dfe6e9">Target: Agent memory / context  |  Crypto Defense: ⚠️ Partial (runtime monitoring needed)</text>
+
+  <!-- Attack Class 5 -->
+  <rect x="50" y="475" width="800" height="70" rx="10" fill="#3498db" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="500" font-size="13" font-weight="bold" fill="white">ATTACK 5 — Cross-Tool Escalation</text>
+  <text x="70" y="520" font-size="11" fill="#ffeaa7">Payload: Chain of individually benign tool calls → compound malicious outcome</text>
+  <text x="70" y="535" font-size="11" fill="#dfe6e9">Target: Multi-tool authorization model  |  Crypto Defense: ⚠️ Partial (data flow tracking needed)</text>
+
+  <line x1="450" y1="545" x2="450" y2="575" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Metrics Box -->
+  <rect x="100" y="580" width="700" height="150" rx="12" fill="#1a1a2e" filter="url(#shadow)"/>
+  <text x="450" y="610" text-anchor="middle" font-size="15" font-weight="bold" fill="#00cec9">📊 Metrics Collected Per Configuration</text>
+
+  <rect x="130" y="625" width="190" height="40" rx="6" fill="#00b894" opacity="0.8"/>
+  <text x="225" y="650" text-anchor="middle" font-size="12" fill="white" font-weight="bold">ASR — Attack Success Rate</text>
+
+  <rect x="340" y="625" width="200" height="40" rx="6" fill="#0984e3" opacity="0.8"/>
+  <text x="440" y="650" text-anchor="middle" font-size="12" fill="white" font-weight="bold">TTD — Time to Detection (ms)</text>
+
+  <rect x="560" y="625" width="210" height="40" rx="6" fill="#6c5ce7" opacity="0.8"/>
+  <text x="665" y="650" text-anchor="middle" font-size="12" fill="white" font-weight="bold">DEV — Data Exfiltration (bytes)</text>
+
+  <rect x="130" y="680" width="290" height="40" rx="6" fill="#e17055" opacity="0.8"/>
+  <text x="275" y="705" text-anchor="middle" font-size="12" fill="white" font-weight="bold">RTR — Regulatory Trigger Rate</text>
+
+  <rect x="440" y="680" width="330" height="40" rx="6" fill="#fdcb6e" opacity="0.8"/>
+  <text x="605" y="705" text-anchor="middle" font-size="12" fill="white" font-weight="bold">CDE — Crypto Defense Effectiveness</text>
+</svg>

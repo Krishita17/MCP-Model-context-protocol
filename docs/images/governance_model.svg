@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <filter id="shadow"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.15"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/></marker>
+  </defs>
+
+  <text x="450" y="35" text-anchor="middle" font-size="22" font-weight="bold" fill="#1a1a2e">MCP Shared Responsibility Model</text>
+  <text x="450" y="55" text-anchor="middle" font-size="12" fill="#666">Governance Framework — Who Owns What, Who Is Liable</text>
+
+  <!-- Actor 1: Platform -->
+  <rect x="50" y="75" width="800" height="115" rx="12" fill="#6c5ce7" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="100" font-size="15" font-weight="bold" fill="white">🏢 AI PLATFORM DEVELOPER (Anthropic, OpenAI, Google)</text>
+  <rect x="70" y="110" width="350" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="130" font-size="11" fill="#ffeaa7" font-weight="bold">Owns:</text>
+  <text x="85" y="145" font-size="10" fill="white">Agent architecture, prompt hardening</text>
+  <text x="85" y="160" font-size="10" fill="white">Sandboxing, CVD program, security advisories</text>
+  <rect x="440" y="110" width="185" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="455" y="130" font-size="11" fill="#ff7675" font-weight="bold">Liability:</text>
+  <text x="455" y="145" font-size="10" fill="white">Product liability if arch</text>
+  <text x="455" y="160" font-size="10" fill="white">enables attacks</text>
+  <rect x="640" y="110" width="190" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="655" y="130" font-size="11" fill="#55efc4" font-weight="bold">Standard:</text>
+  <text x="655" y="145" font-size="10" fill="white">Red-team testing program</text>
+  <text x="655" y="160" font-size="10" fill="white">EU AI Act Art. 15</text>
+
+  <line x1="450" y1="190" x2="450" y2="210" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="530" y="205" font-size="9" fill="#888">provides agent runtime</text>
+
+  <!-- Actor 2: Publisher -->
+  <rect x="50" y="215" width="800" height="115" rx="12" fill="#0984e3" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="240" font-size="15" font-weight="bold" fill="white">🔧 MCP SERVER PUBLISHER (Third-Party Tool Developers)</text>
+  <rect x="70" y="250" width="350" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="270" font-size="11" fill="#ffeaa7" font-weight="bold">Owns:</text>
+  <text x="85" y="285" font-size="10" fill="white">Tool description integrity, CryptoMCP signing</text>
+  <text x="85" y="300" font-size="10" fill="white">Honest capability declarations, Trust Registry</text>
+  <rect x="440" y="250" width="185" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="455" y="270" font-size="11" fill="#ff7675" font-weight="bold">Liability:</text>
+  <text x="455" y="285" font-size="10" fill="white">Fraud/misrepresentation</text>
+  <text x="455" y="300" font-size="10" fill="white">GDPR data processor</text>
+  <rect x="640" y="250" width="190" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="655" y="270" font-size="11" fill="#55efc4" font-weight="bold">Standard:</text>
+  <text x="655" y="285" font-size="10" fill="white">Ed25519 signing required</text>
+  <text x="655" y="300" font-size="10" fill="white">SOC 2 audit, FTC § 5</text>
+
+  <line x1="450" y1="330" x2="450" y2="350" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="530" y="345" font-size="9" fill="#888">publishes signed tool descriptors</text>
+
+  <!-- Actor 3: Enterprise -->
+  <rect x="50" y="355" width="800" height="115" rx="12" fill="#00b894" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="380" font-size="15" font-weight="bold" fill="white">🏭 ENTERPRISE DEPLOYER (Companies Using MCP-Enabled AI)</text>
+  <rect x="70" y="390" width="350" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="410" font-size="11" fill="#2c3e50" font-weight="bold">Owns:</text>
+  <text x="85" y="425" font-size="10" fill="white">Tool vetting, MCPShield deployment</text>
+  <text x="85" y="440" font-size="10" fill="white">Incident response plan, monitoring</text>
+  <rect x="440" y="390" width="185" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="455" y="410" font-size="11" fill="#ff7675" font-weight="bold">Liability:</text>
+  <text x="455" y="425" font-size="10" fill="white">GDPR data controller</text>
+  <text x="455" y="440" font-size="10" fill="white">Breach notification duty</text>
+  <rect x="640" y="390" width="190" height="65" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="655" y="410" font-size="11" fill="#2c3e50" font-weight="bold">Standard:</text>
+  <text x="655" y="425" font-size="10" fill="white">FAIR risk assessment</text>
+  <text x="655" y="440" font-size="10" fill="white">MCPShield + CryptoMCP</text>
+
+  <line x1="450" y1="470" x2="450" y2="490" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="530" y="485" font-size="9" fill="#888">deploys AI agent to</text>
+
+  <!-- Actor 4: End User -->
+  <rect x="50" y="495" width="800" height="100" rx="12" fill="#fdcb6e" filter="url(#shadow)" opacity="0.9"/>
+  <text x="70" y="520" font-size="15" font-weight="bold" fill="#2c3e50">👤 END USER</text>
+  <rect x="70" y="530" width="350" height="50" rx="8" fill="white" fill-opacity="0.2"/>
+  <text x="85" y="548" font-size="11" fill="#2c3e50" font-weight="bold">Owns:</text>
+  <text x="85" y="565" font-size="10" fill="#2c3e50">Consent, awareness of agent capabilities</text>
+  <rect x="440" y="530" width="185" height="50" rx="8" fill="white" fill-opacity="0.2"/>
+  <text x="455" y="548" font-size="11" fill="#2c3e50" font-weight="bold">Liability: Limited</text>
+  <text x="455" y="565" font-size="10" fill="#2c3e50">Primarily deployer/platform</text>
+  <rect x="640" y="530" width="190" height="50" rx="8" fill="white" fill-opacity="0.2"/>
+  <text x="655" y="548" font-size="11" fill="#2c3e50" font-weight="bold">Standard:</text>
+  <text x="655" y="565" font-size="10" fill="#2c3e50">Informed consent, opt-out</text>
+
+  <!-- Regulatory refs -->
+  <rect x="100" y="610" width="130" height="30" rx="6" fill="#e74c3c"/>
+  <text x="165" y="630" text-anchor="middle" font-size="11" fill="white" font-weight="bold">EU AI Act</text>
+  <rect x="250" y="610" width="100" height="30" rx="6" fill="#3498db"/>
+  <text x="300" y="630" text-anchor="middle" font-size="11" fill="white" font-weight="bold">GDPR</text>
+  <rect x="370" y="610" width="120" height="30" rx="6" fill="#2ecc71"/>
+  <text x="430" y="630" text-anchor="middle" font-size="11" fill="white" font-weight="bold">NIST AI RMF</text>
+  <rect x="510" y="610" width="100" height="30" rx="6" fill="#9b59b6"/>
+  <text x="560" y="630" text-anchor="middle" font-size="11" fill="white" font-weight="bold">SOC 2</text>
+  <rect x="630" y="610" width="80" height="30" rx="6" fill="#e67e22"/>
+  <text x="670" y="630" text-anchor="middle" font-size="11" fill="white" font-weight="bold">CCPA</text>
+  <rect x="730" y="610" width="100" height="30" rx="6" fill="#1abc9c"/>
+  <text x="780" y="630" text-anchor="middle" font-size="11" fill="white" font-weight="bold">OWASP</text>
+</svg>

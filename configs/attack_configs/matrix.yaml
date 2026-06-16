@@ -1,0 +1,29 @@
+matrix:
+  llm_backends:
+    - gpt-4o
+    - claude-sonnet
+    - gemini-2.5
+    - llama-3.1-70b
+
+  agent_frameworks:
+    - langchain
+    - crewai
+    - autogen
+
+  attack_classes:
+    - description_injection
+    - tool_shadowing
+    - rug_pull
+    - return_value_poisoning
+    - cross_tool_escalation
+
+  iterations_per_config: 10
+  timeout_seconds: 30
+  parallel_configs: 4
+
+metrics:
+  - attack_success_rate
+  - time_to_detection_ms
+  - data_exfiltration_bytes
+  - regulatory_trigger_rate
+  - crypto_defense_effectiveness

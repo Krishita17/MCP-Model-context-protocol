@@ -1,0 +1,54 @@
+rules:
+  - id: "POL-001"
+    description: "External tools cannot access local filesystem"
+    condition:
+      has_tag: "external"
+      requires_capability: "filesystem"
+    action: "block"
+    compliance_refs:
+      - "NIST CSF PR.AC-4"
+      - "SOC 2 CC6.1"
+    priority: 100
+
+  - id: "POL-002"
+    description: "Credential access requires human-in-the-loop approval"
+    condition:
+      requires_capability: "credential_access"
+    action: "request_approval"
+    compliance_refs:
+      - "GDPR Art. 32"
+      - "SOC 2 CC6.3"
+    priority: 90
+
+  - id: "POL-003"
+    description: "PII data cannot flow to unverified publishers"
+    condition:
+      data_classification: "pii"
+      lacks_tag: "verified_publisher"
+    action: "block"
+    compliance_refs:
+      - "GDPR Art. 5(1)(f)"
+      - "GDPR Art. 25"
+      - "CCPA § 1798.100"
+    priority: 95
+
+  - id: "POL-004"
+    description: "Unknown network requests require approval"
+    condition:
+      has_tag: "external"
+      requires_capability: "network"
+    action: "request_approval"
+    compliance_refs:
+      - "NIST CSF PR.DS-5"
+    priority: 80
+
+  - id: "POL-005"
+    description: "Code execution tools must be verified publishers"
+    condition:
+      requires_capability: "code_execution"
+      lacks_tag: "verified_publisher"
+    action: "block"
+    compliance_refs:
+      - "NIST CSF PR.IP-1"
+      - "SOC 2 CC8.1"
+    priority: 100

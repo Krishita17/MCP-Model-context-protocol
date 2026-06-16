@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 800" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <filter id="shadow"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.15"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/></marker>
+    <linearGradient id="pub" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0984e3"/><stop offset="100%" stop-color="#6c5ce7"/></linearGradient>
+    <linearGradient id="ver" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00b894"/><stop offset="100%" stop-color="#00cec9"/></linearGradient>
+  </defs>
+
+  <text x="450" y="35" text-anchor="middle" font-size="22" font-weight="bold" fill="#1a1a2e">CryptoMCP — Tool Description Signing &amp; Verification</text>
+
+  <!-- PUBLISH PHASE -->
+  <rect x="40" y="60" width="820" height="340" rx="14" fill="url(#pub)" filter="url(#shadow)" opacity="0.9"/>
+  <text x="450" y="90" text-anchor="middle" font-size="16" font-weight="bold" fill="white">🔐 PUBLISH TIME — MCP Server Publisher</text>
+
+  <!-- Step boxes -->
+  <rect x="70" y="110" width="350" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="130" font-size="12" fill="#ffeaa7" font-weight="bold">Step 1</text>
+  <text x="85" y="148" font-size="11" fill="white">Generate Ed25519 key pair (PyNaCl / libsodium)</text>
+
+  <rect x="480" y="110" width="350" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="495" y="130" font-size="12" fill="#ffeaa7" font-weight="bold">Step 2</text>
+  <text x="495" y="148" font-size="11" fill="white">Create tool description JSON (name, desc, schema)</text>
+
+  <rect x="70" y="175" width="350" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="195" font-size="12" fill="#ffeaa7" font-weight="bold">Step 3</text>
+  <text x="85" y="213" font-size="11" fill="white">Compute SHA-256 hash of canonical tool JSON</text>
+
+  <rect x="480" y="175" width="350" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="495" y="195" font-size="12" fill="#ffeaa7" font-weight="bold">Step 4</text>
+  <text x="495" y="213" font-size="11" fill="white">Sign hash with Ed25519 private key</text>
+
+  <rect x="70" y="240" width="350" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="260" font-size="12" fill="#ffeaa7" font-weight="bold">Step 5</text>
+  <text x="85" y="278" font-size="11" fill="white">Submit public key + cert to Trust Registry</text>
+
+  <rect x="480" y="240" width="350" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="495" y="260" font-size="12" fill="#ffeaa7" font-weight="bold">Step 6</text>
+  <text x="495" y="278" font-size="11" fill="white">Publish signed bundle: tool + sig + cert + URL</text>
+
+  <!-- Output bundle -->
+  <rect x="200" y="310" width="500" height="70" rx="10" fill="white" fill-opacity="0.2" stroke="white" stroke-width="1"/>
+  <text x="450" y="335" text-anchor="middle" font-size="13" font-weight="bold" fill="white">📦 Signed Tool Descriptor Bundle</text>
+  <text x="450" y="355" text-anchor="middle" font-size="11" fill="#dfe6e9">{ tool, signature, publisher_cert, trust_registry_url, tool_hash }</text>
+  <text x="450" y="370" text-anchor="middle" font-size="10" fill="#ffeaa7">Integrity: SHA-256 | Authenticity: Ed25519 | Identity: X.509</text>
+
+  <!-- Arrow between phases -->
+  <line x1="450" y1="400" x2="450" y2="430" stroke="#555" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="530" y="420" font-size="11" fill="#666" font-weight="bold">Bundle transmitted to agent</text>
+
+  <!-- VERIFY PHASE -->
+  <rect x="40" y="435" width="820" height="340" rx="14" fill="url(#ver)" filter="url(#shadow)" opacity="0.9"/>
+  <text x="450" y="465" text-anchor="middle" font-size="16" font-weight="bold" fill="white">🛡️ RUNTIME — MCPShield CryptoMCP Verification</text>
+
+  <rect x="70" y="485" width="760" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="505" font-size="12" fill="#1a1a2e" font-weight="bold">Step 1: Intercept</text>
+  <text x="85" y="523" font-size="11" fill="#1a1a2e">MCPShield proxy intercepts incoming tool descriptor bundle before agent sees it</text>
+
+  <rect x="70" y="545" width="370" height="55" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="565" font-size="12" fill="#1a1a2e" font-weight="bold">Step 2: PKI Verify</text>
+  <text x="85" y="583" font-size="11" fill="#1a1a2e">Verify publisher cert against Trust Registry</text>
+  <text x="85" y="593" font-size="9" fill="#e74c3c">❌ Invalid cert → REJECT + ALERT + LOG</text>
+
+  <rect x="460" y="545" width="370" height="55" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="475" y="565" font-size="12" fill="#1a1a2e" font-weight="bold">Step 3: Hash Recompute</text>
+  <text x="475" y="583" font-size="11" fill="#1a1a2e">SHA-256(canonicalize(received_tool))</text>
+  <text x="475" y="593" font-size="9" fill="#e74c3c">❌ Hash mismatch → REJECT (tampered)</text>
+
+  <rect x="70" y="610" width="370" height="55" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="630" font-size="12" fill="#1a1a2e" font-weight="bold">Step 4: Signature Verify</text>
+  <text x="85" y="648" font-size="11" fill="#1a1a2e">Ed25519.verify(pub_key, hash, signature)</text>
+  <text x="85" y="658" font-size="9" fill="#e74c3c">❌ Bad signature → REJECT (modified in transit)</text>
+
+  <rect x="460" y="610" width="370" height="55" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="475" y="630" font-size="12" fill="#1a1a2e" font-weight="bold">Step 5: Baseline Check</text>
+  <text x="475" y="648" font-size="11" fill="#1a1a2e">Compare hash vs approved baseline hash</text>
+  <text x="475" y="658" font-size="9" fill="#e74c3c">❌ Changed since approval → RUG-PULL DETECTED</text>
+
+  <rect x="70" y="680" width="370" height="45" rx="8" fill="white" fill-opacity="0.15"/>
+  <text x="85" y="700" font-size="12" fill="#1a1a2e" font-weight="bold">Step 6: Merkle Audit Log</text>
+  <text x="85" y="716" font-size="11" fill="#1a1a2e">hash(prev || timestamp || tool_hash) → chain</text>
+
+  <rect x="460" y="680" width="370" height="45" rx="8" fill="#2ecc71" fill-opacity="0.4" stroke="white"/>
+  <text x="645" y="700" text-anchor="middle" font-size="14" fill="white" font-weight="bold">✅ Step 7: PASS to Agent</text>
+  <text x="645" y="716" text-anchor="middle" font-size="11" fill="white">Verified tool descriptor delivered</text>
+</svg>

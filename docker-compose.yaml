@@ -1,0 +1,26 @@
+services:
+  trust-registry:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app/src
+    volumes:
+      - ./keys:/app/keys
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  mcpshield-proxy:
+    build: .
+    command: python -m mcpshield.cli
+    environment:
+      - PYTHONPATH=/app/src
+      - TRUST_REGISTRY_URL=http://trust-registry:8000
+    depends_on:
+      trust-registry:
+        condition: service_healthy
+    volumes:
+      - ./configs:/app/configs
