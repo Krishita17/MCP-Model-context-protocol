@@ -30,6 +30,7 @@
   - [MCPShield — Defense Scanning](#4-mcpshield--defense-scanning)
   - [Trust Registry API](#5-trust-registry--api-server)
   - [Docker Deployment](#6-docker-deployment)
+- [API Keys & LLM Setup Guide](#api-keys--llm-setup-guide)
 - [Attack Classes](#attack-classes)
 - [Defense Layers](#defense-layers)
 - [CryptoMCP Workflow](#cryptomcp-workflow)
@@ -373,6 +374,141 @@ docker compose logs -f trust-registry
 # Stop services
 docker compose down
 ```
+
+---
+
+## API Keys & LLM Setup Guide
+
+> **Important:** You do **NOT** need any API keys to run the test suite. All 49 tests run fully offline with mocked backends. API keys are only required for live attack simulations against real LLMs.
+
+### Quick Recommendation — Start Free
+
+| Priority | Backend | Cost | Setup Time | Best For |
+|----------|---------|------|-----------|----------|
+| 1st | **Run tests** (no keys needed) | Free | 0 min | Verifying everything works |
+| 2nd | **Google Gemini** | Free | 2 min | First live attack simulation |
+| 3rd | **Ollama + Llama 8B** | Free (local) | 5 min | Fully offline testing |
+| 4th | **Anthropic Claude** | Free $5 credit | 3 min | Multi-backend comparison |
+| Last | **OpenAI GPT-4o** | Paid ($5+) | 3 min | Full 60-config matrix |
+
+### 1. OpenAI — GPT-4o (Paid)
+
+| | |
+|---|---|
+| **Sign up** | [https://platform.openai.com/signup](https://platform.openai.com/signup) |
+| **Get key** | [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| **Steps** | Sign up → Go to **API Keys** → Click **"Create new secret key"** → Copy it |
+| **Free tier?** | No — you need to add a payment method ($5 minimum credit) |
+| **Key format** | `sk-proj-...` |
+| **Pricing** | GPT-4o: ~$2.50 / 1M input tokens, ~$10 / 1M output tokens |
+
+### 2. Anthropic — Claude Sonnet (Free $5 Credit)
+
+| | |
+|---|---|
+| **Sign up** | [https://console.anthropic.com](https://console.anthropic.com) |
+| **Get key** | [https://console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
+| **Steps** | Sign up → **Settings** → **API Keys** → **Create Key** → Copy it |
+| **Free tier?** | Yes — **$5 free credit** on signup |
+| **Key format** | `sk-ant-api03-...` |
+| **Pricing** | Claude Sonnet: ~$3 / 1M input tokens, ~$15 / 1M output tokens |
+
+### 3. Google — Gemini 2.5 (Completely Free)
+
+| | |
+|---|---|
+| **Get key** | [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **Steps** | Sign in with your Google account → Click **"Create API Key"** → Select a project → Copy |
+| **Free tier?** | **Yes — completely free** with generous rate limits |
+| **Key format** | `AIzaSy...` |
+| **Rate limits** | Free tier: 15 requests/min, 1M tokens/min |
+
+> **Best option to start with** — Gemini is 100% free and works great for testing.
+
+### 4. Meta Llama 3.1 via Ollama (Free, Local, No API Key)
+
+Llama runs **entirely on your local machine** — no API key, no cloud, no cost.
+
+```bash
+# Install Ollama
+# macOS:
+brew install ollama
+# Or download from: https://ollama.com/download
+# Linux:
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull a model (choose based on your RAM):
+ollama pull llama3.1:8b      # 8B model — needs ~5GB RAM (recommended for testing)
+ollama pull llama3.1:70b     # 70B model — needs ~40GB RAM (full research)
+
+# Verify it's running
+ollama list
+
+# Test it
+ollama run llama3.1:8b "Hello, how are you?"
+```
+
+| Model | RAM Required | Disk Space | Best For |
+|-------|-------------|-----------|----------|
+| `llama3.1:8b` | ~5 GB | ~4.7 GB | Quick testing, laptops |
+| `llama3.1:70b` | ~40 GB | ~40 GB | Full research evaluation |
+
+### Setting Up Your `.env` File
+
+Once you have the keys you want, create a `.env` file in the project root:
+
+```bash
+cd MCP-Model-context-protocol
+
+cat > .env << 'EOF'
+# ============================================
+# MCP Security Suite — LLM API Keys
+# ============================================
+# Add ONLY the keys you have.
+# You do NOT need all of them — even one is enough!
+# This file is in .gitignore and will NEVER be committed.
+
+# Option 1: OpenAI (paid — $5 minimum)
+OPENAI_API_KEY=sk-proj-paste-your-key-here
+
+# Option 2: Anthropic (free $5 credit on signup)
+ANTHROPIC_API_KEY=sk-ant-api03-paste-your-key-here
+
+# Option 3: Google Gemini (FREE — recommended to start!)
+GOOGLE_API_KEY=AIzaSy-paste-your-key-here
+
+# Option 4: Llama via Ollama — NO key needed!
+# Just install Ollama and pull the model (see instructions above)
+EOF
+```
+
+### Try It Out
+
+```bash
+# 1. Start with tests — zero keys needed!
+PYTHONPATH=src pytest tests/ -v
+# Expected: 49 passed ✅
+
+# 2. Try a live attack with Gemini (free!)
+mcpoisoner attack --attack description_injection --llm gemini-2.5 --framework langchain
+
+# 3. Or run fully offline with Ollama
+mcpoisoner attack --attack tool_shadowing --llm llama-3.1-70b --framework crewai
+
+# 4. Run the full matrix (uses all configured backends)
+mcpoisoner matrix --output results/ --iterations 5
+```
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `openai.AuthenticationError` | Check your `OPENAI_API_KEY` is correct and has credit |
+| `anthropic.AuthenticationError` | Check your `ANTHROPIC_API_KEY` — may need to verify email |
+| `google.api_core.exceptions.PermissionDenied` | Enable the Generative AI API in your Google Cloud Console |
+| `ConnectionError` for Llama | Make sure Ollama is running: `ollama serve` |
+| `OutOfMemoryError` for Llama 70B | Use the 8B model instead: `ollama pull llama3.1:8b` |
+| Don't want to use any API keys | Just run `pytest tests/ -v` — all tests work offline! |
 
 ---
 
