@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 680" font-family="'SF Mono', 'Fira Code', 'Consolas', monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 780" font-family="'SF Mono', 'Fira Code', 'Consolas', monospace">
   <defs>
     <filter id="shadow"><feDropShadow dx="2" dy="3" stdDeviation="4" flood-opacity="0.3"/></filter>
   </defs>
 
   <!-- Terminal window -->
-  <rect x="10" y="10" width="800" height="660" rx="10" fill="#1e1e2e" filter="url(#shadow)"/>
+  <rect x="10" y="10" width="800" height="760" rx="10" fill="#1e1e2e" filter="url(#shadow)"/>
 
   <!-- Title bar -->
   <rect x="10" y="10" width="800" height="35" rx="10" fill="#313244"/>
@@ -19,44 +19,46 @@
 
   <text x="25" y="95" font-size="10" fill="#6c7086">============================= test session starts ==============================</text>
   <text x="25" y="110" font-size="10" fill="#cdd6f4">platform darwin -- Python 3.14.4, pytest-9.1.0</text>
-  <text x="25" y="125" font-size="10" fill="#cdd6f4">collected <tspan fill="#f9e2af" font-weight="bold">49 items</tspan></text>
+  <text x="25" y="125" font-size="10" fill="#cdd6f4">collected <tspan fill="#f9e2af" font-weight="bold">80 items</tspan></text>
 
-  <text x="25" y="150" font-size="10" fill="#89b4fa" font-weight="bold">tests/cryptomcp/test_merkle.py</text>
-  <text x="25" y="165" font-size="10" fill="#cdd6f4">  ::test_empty_log_valid <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_append_entry <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="180" font-size="10" fill="#cdd6f4">  ::test_chain_integrity <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_chain_links <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="195" font-size="10" fill="#cdd6f4">  ::test_unique_hashes <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_export_import_roundtrip <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="210" font-size="10" fill="#cdd6f4">  ::test_tamper_detection <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="150" font-size="10" fill="#89b4fa" font-weight="bold">tests/automation/test_engine.py</text>
+  <text x="25" y="165" font-size="10" fill="#cdd6f4">  ::test_engine_init <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_builtin_pipelines <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="180" font-size="10" fill="#cdd6f4">  ::test_run_quick_scan <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_custom_pipeline <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
 
-  <text x="25" y="235" font-size="10" fill="#89b4fa" font-weight="bold">tests/cryptomcp/test_signing.py</text>
-  <text x="25" y="250" font-size="10" fill="#cdd6f4">  ::test_deterministic <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_key_order_independent <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="265" font-size="10" fill="#cdd6f4">  ::test_sign_produces_valid_descriptor <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="280" font-size="10" fill="#cdd6f4">  ::test_tampered_description_detected <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="295" font-size="10" fill="#cdd6f4">  ::test_wrong_publisher_key_rejected <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="310" font-size="10" fill="#cdd6f4">  ::test_rug_pull_detected <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_baseline_match_passes <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="205" font-size="10" fill="#89b4fa" font-weight="bold">tests/cryptomcp/test_merkle.py + test_signing.py (15 tests)</text>
+  <text x="25" y="220" font-size="10" fill="#cdd6f4">  ::test_chain_integrity <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_tamper_detection <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="235" font-size="10" fill="#cdd6f4">  ::test_sign_produces_valid <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_rug_pull_detected <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
 
-  <text x="25" y="335" font-size="10" fill="#89b4fa" font-weight="bold">tests/integration/test_end_to_end.py</text>
-  <text x="25" y="350" font-size="10" fill="#cdd6f4">  ::test_clean_tool_passes_all_layers <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="365" font-size="10" fill="#cdd6f4">  ::test_description_injection_blocked_by_scanner <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="380" font-size="10" fill="#cdd6f4">  ::test_tampered_signature_blocked_by_crypto <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="395" font-size="10" fill="#cdd6f4">  ::test_rug_pull_detected_by_hash_baseline <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="410" font-size="10" fill="#cdd6f4">  ::test_audit_log_records_all_decisions <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="260" font-size="10" fill="#89b4fa" font-weight="bold">tests/defenselab/test_simulator.py + test_arena.py</text>
+  <text x="25" y="275" font-size="10" fill="#cdd6f4">  ::test_run_simulation <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_catches_injection <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="290" font-size="10" fill="#cdd6f4">  ::test_run_full_matrix <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_blocks_most_attacks <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="305" font-size="10" fill="#cdd6f4">  ::test_arena_battle <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_arena_tournament <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
 
-  <text x="25" y="435" font-size="10" fill="#89b4fa" font-weight="bold">tests/mcpoisoner/test_unicode_stego.py</text>
-  <text x="25" y="450" font-size="10" fill="#cdd6f4">  ::test_encode_decode_roundtrip <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_detect_homoglyphs <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="465" font-size="10" fill="#cdd6f4">  ::test_detect_invisible_chars <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_unicode_content <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="330" font-size="10" fill="#89b4fa" font-weight="bold">tests/integration/test_end_to_end.py</text>
+  <text x="25" y="345" font-size="10" fill="#cdd6f4">  ::test_clean_tool_passes_all <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_injection_blocked <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="360" font-size="10" fill="#cdd6f4">  ::test_tampered_sig_blocked <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_rug_pull_detected <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
 
-  <text x="25" y="490" font-size="10" fill="#89b4fa" font-weight="bold">tests/mcpshield/test_scanner.py</text>
-  <text x="25" y="505" font-size="10" fill="#cdd6f4">  ::test_clean_tool <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_detect_hidden_instruction <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="520" font-size="10" fill="#cdd6f4">  ::test_detect_invisible_unicode <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_detect_markdown_injection <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="535" font-size="10" fill="#cdd6f4">  ::test_homoglyph_detection <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_detect_privilege_escalation <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="385" font-size="10" fill="#89b4fa" font-weight="bold">tests/mcpoisoner/test_unicode_stego.py</text>
+  <text x="25" y="400" font-size="10" fill="#cdd6f4">  ::test_encode_decode <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_detect_homoglyphs <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="415" font-size="10" fill="#cdd6f4">  ::test_detect_invisible <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_rtl_injection <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
 
-  <text x="25" y="560" font-size="10" fill="#89b4fa" font-weight="bold">tests/mcpshield/test_monitor.py + test_policy_engine.py</text>
-  <text x="25" y="575" font-size="10" fill="#cdd6f4">  ::test_rate_limiting <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_sensitive_data_blocked <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
-  <text x="25" y="590" font-size="10" fill="#cdd6f4">  ::test_block_external_filesystem <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_load_from_yaml <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="440" font-size="10" fill="#89b4fa" font-weight="bold">tests/mcpshield/ (18 tests)</text>
+  <text x="25" y="455" font-size="10" fill="#cdd6f4">  ::test_clean_tool <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_hidden_instruction <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="470" font-size="10" fill="#cdd6f4">  ::test_rate_limiting <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_sensitive_data_blocked <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="485" font-size="10" fill="#cdd6f4">  ::test_block_external_fs <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_load_from_yaml <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
 
-  <text x="25" y="620" font-size="10" fill="#6c7086">=============================== results ========================================</text>
+  <text x="25" y="510" font-size="10" fill="#89b4fa" font-weight="bold">tests/servers/test_calculator.py (13 tests)</text>
+  <text x="25" y="525" font-size="10" fill="#cdd6f4">  ::test_add <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_subtract <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_multiply <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="540" font-size="10" fill="#cdd6f4">  ::test_divide <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_power <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_sqrt <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="555" font-size="10" fill="#cdd6f4">  ::test_jsonrpc_initialize <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_jsonrpc_tool_call <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+
+  <text x="25" y="580" font-size="10" fill="#89b4fa" font-weight="bold">tests/servers/test_filesystem.py</text>
+  <text x="25" y="595" font-size="10" fill="#cdd6f4">  ::test_write_and_read <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_path_traversal_blocked <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+  <text x="25" y="610" font-size="10" fill="#cdd6f4">  ::test_delete_file <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan>  ::test_read_nonexistent <tspan fill="#a6e3a1" font-weight="bold">PASSED</tspan></text>
+
+  <text x="25" y="650" font-size="10" fill="#6c7086">=============================== results ========================================</text>
 
   <!-- Big green pass bar -->
-  <rect x="25" y="630" width="770" height="30" rx="4" fill="#a6e3a1" opacity="0.15"/>
-  <text x="410" y="651" text-anchor="middle" font-size="14" fill="#a6e3a1" font-weight="bold">✅ 49 passed in 0.78s — ALL TESTS PASSING</text>
+  <rect x="25" y="665" width="770" height="40" rx="4" fill="#a6e3a1" opacity="0.15"/>
+  <text x="410" y="691" text-anchor="middle" font-size="16" fill="#a6e3a1" font-weight="bold">80 passed in 0.33s — ALL TESTS PASSING</text>
 </svg>

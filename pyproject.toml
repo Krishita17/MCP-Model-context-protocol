@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-security-suite"
-version = "0.1.0"
+version = "2.0.0"
 description = "Attacking, Defending, Governing, and Cryptographically Securing MCP Tool Ecosystems"
 readme = "README.md"
 license = "MIT"
@@ -43,9 +43,11 @@ dependencies = [
     "google-generativeai>=0.4.0",
     "rich>=13.7.0",
     "click>=8.1.0",
+    "typer>=0.9.0",
     "structlog>=24.1.0",
     "matplotlib>=3.8.0",
     "plotly>=5.19.0",
+    "watchdog>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -59,11 +61,16 @@ dev = [
     "pre-commit>=3.6.0",
     "hypothesis>=6.98.0",
 ]
+gui = [
+    "pyside6>=6.7.0",
+]
 
 [project.scripts]
 mcpoisoner = "mcpoisoner.cli:main"
 mcpshield = "mcpshield.cli:main"
 cryptomcp = "cryptomcp.cli:main"
+mcp-security = "cli.main:app"
+mcp-gui = "gui:run"
 
 [project.urls]
 Homepage = "https://github.com/Krishita17/MCP-Model-context-protocol"
@@ -72,7 +79,7 @@ Repository = "https://github.com/Krishita17/MCP-Model-context-protocol"
 Issues = "https://github.com/Krishita17/MCP-Model-context-protocol/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mcpoisoner", "src/mcpshield", "src/cryptomcp", "src/governance"]
+packages = ["src/mcpoisoner", "src/mcpshield", "src/cryptomcp", "src/governance", "src/gui", "src/cli", "src/defenselab", "src/automation"]
 
 [tool.ruff]
 target-version = "py311"
