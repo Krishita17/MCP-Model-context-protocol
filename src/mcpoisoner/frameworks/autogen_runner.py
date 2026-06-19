@@ -24,7 +24,12 @@ class AutoGenRunner(AgentRunner):
         task: str,
         backend: str,
     ) -> AgentExecutionResult:
-        from autogen import AssistantAgent, UserProxyAgent, register_function
+        try:
+            from autogen import AssistantAgent, UserProxyAgent, register_function
+        except ImportError:
+            return AgentExecutionResult(
+                error="autogen not installed — run: pip install pyautogen"
+            )
 
         config_list = self._create_config(backend)
         call_tracker: list[dict[str, Any]] = []

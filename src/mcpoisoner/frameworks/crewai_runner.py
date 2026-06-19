@@ -24,9 +24,12 @@ class CrewAIRunner(AgentRunner):
         task: str,
         backend: str,
     ) -> AgentExecutionResult:
-        from crewai import Agent, Crew, Task
-        from crewai.tools import BaseTool as CrewBaseTool
-        from pydantic import BaseModel, Field
+        try:
+            from crewai import Agent, Crew, Task
+        except ImportError:
+            return AgentExecutionResult(
+                error="crewai not installed — run: pip install crewai"
+            )
 
         llm = self._create_llm(backend)
         call_tracker: list[dict[str, Any]] = []

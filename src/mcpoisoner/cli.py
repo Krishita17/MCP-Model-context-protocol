@@ -13,7 +13,7 @@ from rich.table import Table
 from mcpoisoner.attacks.base import AttackClass, AttackConfig
 from mcpoisoner.attacks import ATTACK_REGISTRY
 from mcpoisoner.backends import available_backends, is_backend_available
-from mcpoisoner.harness.runner import AttackMatrixRunner, MatrixConfig
+from mcpoisoner.harness.runner import AGENT_FRAMEWORKS, AttackMatrixRunner, MatrixConfig
 from mcpoisoner.results.writer import write_run_result, write_aggregate_csv
 
 load_dotenv()
@@ -115,8 +115,14 @@ def attack(attack: str, llm: str, framework: str, variant: str, iterations: int,
 @click.option("--output", type=click.Path(), default="results", help="Output directory")
 @click.option("--parallel", type=int, default=4, help="Parallel configurations")
 @click.option("--iterations", type=int, default=10, help="Iterations per configuration")
-def matrix(output: str, parallel: int, iterations: int) -> None:
-    """Run the full 60-configuration attack matrix."""
+@click.option(
+    "--framework",
+    type=click.Choice(["langchain", "crewai", "autogen"]),
+    multiple=True,
+    help="Limit to specific agent framework(s). Repeatable. Default: all three.",
+)
+def matrix(output: str, parallel: int, iterations: int, framework: tuple[str, ...]) -> None:
+    """Run the full attack matrix (optionally limited to specific frameworks)."""
     avail = available_backends()
     console.print("\n[bold red]MCPoisoner[/bold red] — Full Attack Matrix")
     console.print(f"  Mode: [bold green]REAL LLM API CALLS[/bold green]")
@@ -126,7 +132,11 @@ def matrix(output: str, parallel: int, iterations: int) -> None:
         console.print("\n[bold red]Error:[/bold red] No backends available. Set API keys in .env file.")
         return
 
+    frameworks = list(framework) if framework else list(AGENT_FRAMEWORKS)
+    console.print(f"  Frameworks: {', '.join(frameworks)}")
+
     config = MatrixConfig(
+        agent_frameworks=frameworks,
         iterations_per_config=iterations,
         output_dir=Path(output),
         parallel_configs=parallel,
