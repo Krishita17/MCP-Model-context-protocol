@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 import click
@@ -34,8 +35,18 @@ def main() -> None:
 @click.option("--variant", type=str, default="default", help="Payload variant")
 @click.option("--iterations", type=int, default=10, help="Number of iterations")
 @click.option("--output", type=click.Path(), default="results", help="Output directory")
-def attack(attack: str, llm: str, framework: str, variant: str, iterations: int, output: str) -> None:
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Crash loudly with full traceback on any failed LLM call (no silent fallback).",
+)
+def attack(
+    attack: str, llm: str, framework: str, variant: str, iterations: int, output: str, strict: bool
+) -> None:
     """Run a single attack against a specific configuration."""
+    if strict:
+        os.environ["MCPOISONER_STRICT"] = "1"
     if not is_backend_available(llm):
         console.print(f"\n[bold red]Error:[/bold red] Backend '{llm}' not available.")
         avail = available_backends()
@@ -121,8 +132,18 @@ def attack(attack: str, llm: str, framework: str, variant: str, iterations: int,
     multiple=True,
     help="Limit to specific agent framework(s). Repeatable. Default: all three.",
 )
-def matrix(output: str, parallel: int, iterations: int, framework: tuple[str, ...]) -> None:
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Crash loudly with full traceback on any failed LLM call (no silent fallback).",
+)
+def matrix(
+    output: str, parallel: int, iterations: int, framework: tuple[str, ...], strict: bool
+) -> None:
     """Run the full attack matrix (optionally limited to specific frameworks)."""
+    if strict:
+        os.environ["MCPOISONER_STRICT"] = "1"
     avail = available_backends()
     console.print("\n[bold red]MCPoisoner[/bold red] — Full Attack Matrix")
     console.print(f"  Mode: [bold green]REAL LLM API CALLS[/bold green]")

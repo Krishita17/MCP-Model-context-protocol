@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -142,6 +143,18 @@ class BaseAttack(ABC):
                 result.agent_framework = self.config.agent_framework
                 results.append(result)
             except Exception as e:
+                # Strict mode (MCPOISONER_STRICT=1): crash loudly with the full
+                # traceback instead of recording the error and continuing. Use
+                # this during research to surface failed API calls immediately.
+                if os.environ.get("MCPOISONER_STRICT"):
+                    import traceback
+
+                    print(
+                        f"\n[STRICT] Attack iteration {i + 1} raised — halting.\n",
+                        flush=True,
+                    )
+                    traceback.print_exc()
+                    raise
                 self.log.error("attack_iteration_failed", iteration=i + 1, error=str(e))
                 results.append(
                     AttackResult(

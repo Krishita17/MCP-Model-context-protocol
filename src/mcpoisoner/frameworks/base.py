@@ -53,12 +53,26 @@ class AgentRunner(ABC):
         backend: str,
         max_retries: int = 3,
     ) -> AgentExecutionResult:
+        import os
+
         last_error: Exception | None = None
         for attempt in range(max_retries + 1):
             try:
                 return await self.run(tools, task, backend)
             except Exception as e:
                 last_error = e
+                # Strict mode: surface the real error (e.g. Ollama connection
+                # refused, model not found) with a full traceback and re-raise.
+                if os.environ.get("MCPOISONER_STRICT"):
+                    import traceback
+
+                    print(
+                        f"\n[STRICT] {self.framework_name} agent call failed on "
+                        f"backend '{backend}' — halting.\n",
+                        flush=True,
+                    )
+                    traceback.print_exc()
+                    raise
                 err_str = str(e).lower()
                 is_rate_limit = any(
                     kw in err_str
