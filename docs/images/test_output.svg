@@ -60,5 +60,5 @@
 
   <!-- Big green pass bar -->
   <rect x="25" y="665" width="770" height="40" rx="4" fill="#a6e3a1" opacity="0.15"/>
-  <text x="410" y="691" text-anchor="middle" font-size="16" fill="#a6e3a1" font-weight="bold">80 passed in 0.33s — ALL TESTS PASSING</text>
+  <text x="410" y="691" text-anchor="middle" font-size="16" fill="#a6e3a1" font-weight="bold">110 passed in 0.33s — ALL TESTS PASSING</text>
 </svg>

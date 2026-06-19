@@ -79,7 +79,7 @@ Repository = "https://github.com/Krishita17/MCP-Model-context-protocol"
 Issues = "https://github.com/Krishita17/MCP-Model-context-protocol/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mcpoisoner", "src/mcpshield", "src/cryptomcp", "src/governance", "src/gui", "src/cli", "src/defenselab", "src/automation"]
+packages = ["src/mcpoisoner", "src/mcpshield", "src/cryptomcp", "src/governance", "src/gui", "src/cli", "src/defenselab", "src/automation", "src/providers", "src/host", "src/installer", "src/guardrails", "src/config.py", "src/taxonomy.py", "src/benchmark.py", "src/environment.py"]
 
 [tool.ruff]
 target-version = "py311"
@@ -90,6 +90,7 @@ select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "PT", "SIM", "TCH"
 ignore = ["S101", "S603", "S607"]
 
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [

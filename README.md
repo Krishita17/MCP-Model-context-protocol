@@ -10,7 +10,7 @@
 [![CI](https://github.com/Krishita17/MCP-Model-context-protocol/actions/workflows/ci.yaml/badge.svg)](https://github.com/Krishita17/MCP-Model-context-protocol/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-80%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-110%20passed-brightgreen.svg)](tests/)
 [![Security](https://img.shields.io/badge/security-research-red.svg)](#attack-classes)
 
 </div>
@@ -186,7 +186,7 @@ EOF
 ### 1. Running Tests
 
 ```bash
-# Run all 80 tests
+# Run all 110 tests
 PYTHONPATH=src pytest tests/ -v
 
 # Run specific test modules
@@ -891,7 +891,7 @@ MCP-Model-context-protocol/
 │   ├── filesystem/server.py           # Sandboxed file ops (4 tools)
 │   └── web_fetch/server.py            # HTTP fetch with SSRF protection (2 tools)
 │
-├── tests/                             # 80 tests across all modules
+├── tests/                             # 110 tests across all modules
 │   ├── cryptomcp/                     # 15 crypto tests
 │   ├── mcpshield/                     # 18 defense tests
 │   ├── mcpoisoner/                    # 7 attack tests

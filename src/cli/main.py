@@ -10,6 +10,7 @@ import asyncio
 import hashlib
 import json
 import random
+import sys
 import time
 from datetime import datetime
 from enum import Enum
@@ -1440,6 +1441,568 @@ def report_generate(
 
 # =========================================================================
 # Entry point
+# =========================================================================
+
+
+# =========================================================================
+# PROVIDERS command
+# =========================================================================
+
+
+@app.command("providers")
+def cmd_providers() -> None:
+    """List LLM providers and their readiness status."""
+    import os
+    import shutil
+
+    provider_info = [
+        ("ollama", None, "ollama binary"),
+        ("openai", "OPENAI_API_KEY", None),
+        ("anthropic", "ANTHROPIC_API_KEY", None),
+        ("gemini", "GOOGLE_API_KEY", None),
+        ("openrouter", "OPENROUTER_API_KEY", None),
+    ]
+
+    table = Table(title="LLM Providers", box=box.ROUNDED, border_style="magenta")
+    table.add_column("Provider", style=CYAN)
+    table.add_column("Ready", style=GREEN)
+    table.add_column("Detail", style=DIM)
+
+    for name, env_var, binary_check in provider_info:
+        if binary_check:
+            ok = shutil.which("ollama") is not None
+            detail = "binary in PATH" if ok else "binary not found"
+        else:
+            ok = bool(os.environ.get(env_var, ""))
+            detail = f"{env_var} {'set' if ok else 'not set'}"
+        table.add_row(name, "[green]YES[/green]" if ok else "[red]NO[/red]", detail)
+
+    console.print(table)
+
+
+# =========================================================================
+# SERVERS command
+# =========================================================================
+
+
+@app.command("servers")
+def cmd_servers() -> None:
+    """List registered MCP servers from config."""
+    try:
+        from config import load_config
+        cfg = load_config()
+        servers = cfg.get("servers", {})
+    except Exception:
+        servers = {
+            "calculator": {"command": "python", "args": ["servers/calculator.py"], "description": "Basic calculator MCP server"},
+            "filesystem": {"command": "python", "args": ["servers/filesystem.py"], "description": "Filesystem access MCP server"},
+            "vulnerable": {"command": "python", "args": ["servers/vulnerable.py"], "description": "Intentionally vulnerable demo server"},
+        }
+
+    table = Table(title="Registered MCP Servers", box=box.ROUNDED, border_style="magenta")
+    table.add_column("Name", style=CYAN)
+    table.add_column("Command", style=GREEN)
+    table.add_column("Description", style=DIM)
+
+    for name, info in servers.items():
+        cmd = info.get("command", "?")
+        args = " ".join(info.get("args", []))
+        desc = info.get("description", "")
+        table.add_row(name, f"{cmd} {args}", desc)
+
+    console.print(table)
+
+
+# =========================================================================
+# TOOLS command
+# =========================================================================
+
+
+@app.command("tools")
+def cmd_tools(
+    server: str = typer.Option(..., "--server", "-s", help="Server name"),
+) -> None:
+    """List tools available on a named MCP server."""
+    try:
+        from host import Host
+        h = Host()
+        loop = asyncio.new_event_loop()
+        try:
+            tools = loop.run_until_complete(h.list_tools(server))
+        finally:
+            loop.close()
+    except Exception:
+        # Fallback: show from known tool specs
+        tools = [
+            {"name": "add", "description": "Add two numbers", "inputSchema": {"type": "object", "properties": {"a": {"type": "number"}, "b": {"type": "number"}}}},
+            {"name": "multiply", "description": "Multiply two numbers", "inputSchema": {"type": "object", "properties": {"a": {"type": "number"}, "b": {"type": "number"}}}},
+        ]
+        console.print(f"[yellow]Could not connect to server '{server}', showing demo tools.[/yellow]\n")
+
+    table = Table(title=f"Tools on '{server}'", box=box.ROUNDED, border_style="magenta")
+    table.add_column("Tool", style=CYAN)
+    table.add_column("Description", style=GREEN)
+    table.add_column("Input Schema", style=DIM)
+
+    for t in tools:
+        if isinstance(t, dict):
+            name = t.get("name", "?")
+            desc = t.get("description", "")
+            schema = json.dumps(t.get("inputSchema", {}), separators=(",", ":"))[:80]
+        else:
+            name = getattr(t, "name", "?")
+            desc = getattr(t, "description", "")
+            schema = str(getattr(t, "input_schema", ""))[:80]
+        table.add_row(name, desc, schema)
+
+    console.print(table)
+
+
+# =========================================================================
+# CALL command
+# =========================================================================
+
+
+@app.command("call")
+def cmd_call(
+    server: str = typer.Option(..., "--server", "-s", help="Server name"),
+    tool: str = typer.Option(..., "--tool", "-t", help="Tool name"),
+    args: str = typer.Option("{}", "--args", "-a", help="JSON arguments"),
+) -> None:
+    """Call a tool directly on a named MCP server."""
+    try:
+        parsed_args = json.loads(args)
+    except json.JSONDecodeError as e:
+        console.print(f"[red]Invalid JSON args:[/red] {e}")
+        raise typer.Exit(1)
+
+    try:
+        from host import Host
+        h = Host()
+        loop = asyncio.new_event_loop()
+        try:
+            result = loop.run_until_complete(h.call_tool(server, tool, parsed_args))
+        finally:
+            loop.close()
+    except Exception as e:
+        console.print(f"[yellow]Server call failed ({e}), simulating result.[/yellow]")
+        result = {"result": f"<simulated result for {tool}({parsed_args})>"}
+
+    console.print(Panel(
+        json.dumps(result, indent=2, default=str) if isinstance(result, dict) else str(result),
+        title=f"[bold cyan]{server}/{tool}[/bold cyan]",
+        border_style="green",
+    ))
+
+
+# =========================================================================
+# ASK command
+# =========================================================================
+
+
+@app.command("ask")
+def cmd_ask(
+    prompt: str = typer.Argument(..., help="Question / prompt text"),
+    provider: str = typer.Option("ollama", "--provider", "-p", help="LLM provider name"),
+    server: Optional[str] = typer.Option(None, "--server", "-s", help="MCP server for tool use"),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="Model override"),
+) -> None:
+    """One-shot LLM question, optionally with MCP tool access."""
+    from providers import build_provider, Message, ToolSpec
+
+    kwargs: dict[str, Any] = {}
+    if model:
+        kwargs["model"] = model
+
+    llm = build_provider(provider, **kwargs)
+
+    # Gather tools from server if specified
+    tool_specs: list[ToolSpec] = []
+    if server:
+        try:
+            from host import Host
+            h = Host()
+            loop = asyncio.new_event_loop()
+            try:
+                raw_tools = loop.run_until_complete(h.list_tools(server))
+                for t in raw_tools:
+                    if isinstance(t, dict):
+                        tool_specs.append(ToolSpec(name=t["name"], description=t.get("description", ""), input_schema=t.get("inputSchema", {})))
+                    else:
+                        tool_specs.append(ToolSpec(name=t.name, description=t.description, input_schema=t.input_schema))
+            finally:
+                loop.close()
+        except Exception as e:
+            console.print(f"[yellow]Could not load tools from '{server}': {e}[/yellow]")
+
+    messages = [Message.user(prompt)]
+
+    loop = asyncio.new_event_loop()
+    try:
+        response = loop.run_until_complete(llm.complete(messages, tools=tool_specs or None))
+    finally:
+        loop.close()
+
+    console.print(Panel(
+        response.content or "[dim]<no text content>[/dim]",
+        title=f"[bold cyan]{llm.name}/{llm.model}[/bold cyan]",
+        border_style="magenta",
+    ))
+
+    if response.tool_calls:
+        for tc in response.tool_calls:
+            console.print(f"  [yellow]Tool call:[/yellow] {tc.name}({json.dumps(tc.arguments)})")
+
+
+# =========================================================================
+# CHAT command
+# =========================================================================
+
+
+@app.command("chat")
+def cmd_chat(
+    provider: str = typer.Option("ollama", "--provider", "-p", help="LLM provider name"),
+    server: Optional[str] = typer.Option(None, "--server", "-s", help="MCP server for tool use"),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="Model override"),
+) -> None:
+    """Interactive chat loop with an LLM, optionally with MCP tools."""
+    from providers import build_provider, Message, ToolSpec
+
+    kwargs: dict[str, Any] = {}
+    if model:
+        kwargs["model"] = model
+
+    llm = build_provider(provider, **kwargs)
+
+    # Gather tools
+    tool_specs: list[ToolSpec] = []
+    if server:
+        try:
+            from host import Host
+            h = Host()
+            loop = asyncio.new_event_loop()
+            try:
+                raw_tools = loop.run_until_complete(h.list_tools(server))
+                for t in raw_tools:
+                    if isinstance(t, dict):
+                        tool_specs.append(ToolSpec(name=t["name"], description=t.get("description", ""), input_schema=t.get("inputSchema", {})))
+                    else:
+                        tool_specs.append(ToolSpec(name=t.name, description=t.description, input_schema=t.input_schema))
+            finally:
+                loop.close()
+        except Exception as e:
+            console.print(f"[yellow]Could not load tools from '{server}': {e}[/yellow]")
+
+    console.print(BANNER)
+    console.print(f"[cyan]Provider:[/cyan] {llm.name}/{llm.model}")
+    if server:
+        console.print(f"[cyan]Server:[/cyan] {server} ({len(tool_specs)} tools)")
+    console.print("[dim]Type 'quit' or 'exit' to leave. Ctrl+C also works.[/dim]\n")
+
+    messages: list[Message] = [
+        Message.system("You are a helpful assistant with access to MCP tools for security research.")
+    ]
+
+    loop = asyncio.new_event_loop()
+    try:
+        while True:
+            try:
+                user_input = console.input("[bold green]you>[/bold green] ")
+            except (EOFError, KeyboardInterrupt):
+                console.print("\n[dim]Goodbye.[/dim]")
+                break
+
+            if user_input.strip().lower() in ("quit", "exit", "q"):
+                console.print("[dim]Goodbye.[/dim]")
+                break
+
+            if not user_input.strip():
+                continue
+
+            messages.append(Message.user(user_input))
+
+            try:
+                response = loop.run_until_complete(llm.complete(messages, tools=tool_specs or None))
+                messages.append(response)
+
+                if response.content:
+                    console.print(f"\n[bold magenta]assistant>[/bold magenta] {response.content}\n")
+
+                # Handle tool calls
+                if response.tool_calls:
+                    for tc in response.tool_calls:
+                        console.print(f"  [yellow]Tool call:[/yellow] {tc.name}({json.dumps(tc.arguments)})")
+                        # Try to execute tool call via host
+                        try:
+                            from host import Host
+                            h = Host()
+                            tool_result = loop.run_until_complete(h.call_tool(server, tc.name, tc.arguments))
+                            result_str = json.dumps(tool_result, default=str) if isinstance(tool_result, dict) else str(tool_result)
+                        except Exception:
+                            result_str = f"<tool execution unavailable for {tc.name}>"
+
+                        console.print(f"  [green]Result:[/green] {result_str[:200]}")
+                        messages.append(Message.tool_result(tc.id, tc.name, result_str))
+
+                    # Get follow-up response after tool results
+                    followup = loop.run_until_complete(llm.complete(messages, tools=tool_specs or None))
+                    messages.append(followup)
+                    if followup.content:
+                        console.print(f"\n[bold magenta]assistant>[/bold magenta] {followup.content}\n")
+
+            except Exception as e:
+                console.print(f"[red]Error:[/red] {e}\n")
+    finally:
+        loop.close()
+
+
+# =========================================================================
+# INSTALL command
+# =========================================================================
+
+
+@app.command("install")
+def cmd_install(
+    target: str = typer.Argument(..., help="Install target (e.g. 'claude-desktop')"),
+    server: str = typer.Option(..., "--server", "-s", help="Server name to wire in"),
+) -> None:
+    """Wire an MCP server into a host application config."""
+    if target != "claude-desktop":
+        console.print(f"[red]Unknown install target:[/red] {target}")
+        console.print("[dim]Supported targets: claude-desktop[/dim]")
+        raise typer.Exit(1)
+
+    # Claude Desktop config location
+    home = Path.home()
+    if sys.platform == "darwin":
+        config_path = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+    elif sys.platform == "win32":
+        config_path = home / "AppData" / "Roaming" / "Claude" / "claude_desktop_config.json"
+    else:
+        config_path = home / ".config" / "claude" / "claude_desktop_config.json"
+
+    # Load or create config
+    if config_path.exists():
+        config = json.loads(config_path.read_text())
+    else:
+        config = {}
+
+    mcp_servers = config.setdefault("mcpServers", {})
+
+    # Get server command from our registry
+    try:
+        from config import load_config
+        cfg = load_config()
+        srv = cfg.get("servers", {}).get(server, {})
+    except Exception:
+        srv = {}
+
+    src_root = Path(__file__).resolve().parent.parent
+    server_script = src_root / "servers" / f"{server}.py"
+
+    mcp_servers[server] = {
+        "command": srv.get("command", "python"),
+        "args": srv.get("args", [str(server_script)]),
+    }
+
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(json.dumps(config, indent=2))
+
+    console.print(Panel(
+        f"[green]Server '{server}' wired into Claude Desktop config.[/green]\n\n"
+        f"[cyan]Config:[/cyan] {config_path}\n"
+        f"[cyan]Server:[/cyan] {json.dumps(mcp_servers[server], indent=2)}",
+        title="[bold green]Claude Desktop Installation[/bold green]",
+        border_style="green",
+    ))
+
+
+# =========================================================================
+# SCAN command
+# =========================================================================
+
+
+@app.command("scan")
+def cmd_scan(
+    path: str = typer.Argument(..., help="Path to server .py file to scan"),
+) -> None:
+    """Static security scan of an MCP server source file."""
+    target = Path(path)
+    if not target.exists():
+        console.print(f"[red]File not found:[/red] {path}")
+        raise typer.Exit(1)
+
+    source = target.read_text()
+
+    # Simple pattern-based static analysis
+    import re
+    findings: list[dict[str, str]] = []
+
+    dangerous_patterns = [
+        (r"eval\s*\(", "Use of eval()", "critical", "Replace with ast.literal_eval or safe_eval guardrail"),
+        (r"exec\s*\(", "Use of exec()", "critical", "Remove exec() or use safe_run guardrail"),
+        (r"os\.system\s*\(", "Use of os.system()", "high", "Use subprocess with allowlist via safe_run"),
+        (r"subprocess\.(?:call|run|Popen)\s*\(.*shell\s*=\s*True", "Shell=True in subprocess", "high", "Use shell=False and pass args as list"),
+        (r"pickle\.loads?\s*\(", "Pickle deserialization", "critical", "Use safe_loads guardrail"),
+        (r"__import__\s*\(", "Dynamic import", "medium", "Use explicit imports"),
+        (r"open\s*\([^)]*['\"](?:w|a|r\+)", "File write without path validation", "medium", "Use safe_resolve guardrail for path validation"),
+        (r"SELECT\s+.*\+.*(?:request|input|arg)", "Possible SQL injection", "high", "Use parameterized queries and safe_identifier"),
+        (r"api_key|secret|password|token\s*=\s*['\"]", "Hardcoded secret", "critical", "Use environment variables"),
+        (r"\.format\s*\(.*(?:request|input|user)", "Possible format string injection", "medium", "Use safe_format guardrail"),
+        (r"(?:0\.0\.0\.0|localhost).*(?:debug|DEBUG)\s*=\s*True", "Debug mode on public interface", "high", "Disable debug in production"),
+    ]
+
+    for pattern, desc, severity, recommendation in dangerous_patterns:
+        for match in re.finditer(pattern, source):
+            line_num = source[:match.start()].count("\n") + 1
+            findings.append({
+                "Finding": desc,
+                "Severity": severity.upper(),
+                "Line": str(line_num),
+                "Recommendation": recommendation,
+            })
+
+    if findings:
+        table = Table(title=f"Scan Results: {target.name}", box=box.ROUNDED, border_style="red")
+        table.add_column("Finding", style=CYAN)
+        table.add_column("Severity", style=RED)
+        table.add_column("Line", style=YELLOW)
+        table.add_column("Recommendation", style=DIM)
+        for f in findings:
+            table.add_row(f["Finding"], f["Severity"], f["Line"], f["Recommendation"])
+        console.print(table)
+    else:
+        console.print("[green]No issues found.[/green]")
+
+    console.print(Panel(
+        f"[cyan]File:[/cyan] {target}\n"
+        f"[cyan]Lines:[/cyan] {source.count(chr(10)) + 1}\n"
+        f"[cyan]Findings:[/cyan] {len(findings)}",
+        title="[bold]Scan Summary[/bold]",
+        border_style="magenta",
+    ))
+
+
+# =========================================================================
+# BENCH command
+# =========================================================================
+
+
+@app.command("bench")
+def cmd_bench(
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output directory for reports"),
+    fmt: OutputFormat = typer.Option(OutputFormat.table, "--format", help="Output format"),
+) -> None:
+    """Run the guardrail benchmark across all 21 attack vectors."""
+    from benchmark import run_guardrail_benchmark, write_reports
+
+    console.print(BANNER)
+    console.print("[cyan]Running guardrail benchmark...[/cyan]\n")
+
+    report = run_guardrail_benchmark()
+
+    rows = []
+    for c in report.cases:
+        status = "[green]BLOCKED[/green]" if c.blocked else ("[red]MISSED[/red]" if not c.error else "[yellow]ERROR[/yellow]")
+        rows.append({
+            "Attack": c.attack_id,
+            "Guardrail": c.guardrail,
+            "Blocked": "YES" if c.blocked else ("ERROR" if c.error else "NO"),
+            "Time (ms)": str(c.elapsed_ms),
+            "Error": (c.error or "")[:50],
+        })
+
+    _output(rows, ["Attack", "Guardrail", "Blocked", "Time (ms)", "Error"], title="Guardrail Benchmark", fmt=fmt)
+
+    console.print(Panel(
+        f"[green]Blocked:[/green] {report.blocked}/{report.total}\n"
+        f"[red]Missed:[/red] {report.missed}/{report.total}\n"
+        f"[yellow]Errored:[/yellow] {report.errored}/{report.total}\n"
+        f"[cyan]Block Rate:[/cyan] {report.block_rate:.1%}\n"
+        f"[dim]Elapsed: {report.elapsed_s}s[/dim]",
+        title="[bold]Benchmark Summary[/bold]",
+        border_style="magenta",
+    ))
+
+    if output:
+        write_reports(report, output)
+        console.print(f"[green]Reports written to {output}/[/green]")
+
+
+# =========================================================================
+# TAXONOMY command
+# =========================================================================
+
+
+@app.command("taxonomy")
+def cmd_taxonomy(
+    fmt: OutputFormat = typer.Option(OutputFormat.table, "--format", help="Output format"),
+) -> None:
+    """Show the threat taxonomy mapping attacks to OWASP/CWE/ATLAS."""
+    from taxonomy import TAXONOMY, owasp_coverage
+
+    rows = []
+    for entry in TAXONOMY:
+        rows.append({
+            "#": str(entry.num),
+            "ID": entry.id,
+            "Title": entry.title[:50],
+            "OWASP": entry.refs.owasp_llm,
+            "CWE": f"CWE-{entry.refs.cwe}",
+            "CWE Name": entry.refs.cwe_name[:40],
+            "ATLAS": entry.refs.atlas or "-",
+        })
+
+    _output(rows, ["#", "ID", "Title", "OWASP", "CWE", "CWE Name", "ATLAS"], title="Threat Taxonomy (21 Attack Modules)", fmt=fmt)
+
+    # OWASP coverage summary
+    coverage = owasp_coverage()
+    console.print(Panel(
+        "\n".join(f"[cyan]{cat}[/cyan]: {', '.join(ids)}" for cat, ids in sorted(coverage.items())),
+        title="[bold]OWASP LLM Top 10 Coverage[/bold]",
+        border_style="magenta",
+    ))
+
+
+# =========================================================================
+# DOCTOR command
+# =========================================================================
+
+
+@app.command("doctor")
+def cmd_doctor() -> None:
+    """Run environment readiness checks."""
+    from environment import gather, stats
+
+    checks = gather()
+    st = stats()
+
+    table = Table(title="Environment Checks", box=box.ROUNDED, border_style="magenta")
+    table.add_column("Check", style=CYAN)
+    table.add_column("Status")
+    table.add_column("Detail", style=DIM)
+    table.add_column("Hint", style=YELLOW)
+
+    for c in checks:
+        status = "[green]OK[/green]" if c.ok else "[red]FAIL[/red]"
+        table.add_row(c.name, status, c.detail, c.hint)
+
+    console.print(table)
+
+    passed = sum(1 for c in checks if c.ok)
+    total = len(checks)
+
+    console.print(Panel(
+        f"[green]Passed:[/green] {passed}/{total}\n"
+        f"[cyan]Attack modules:[/cyan] {st.get('attack_modules', '?')}\n"
+        f"[cyan]Guardrail modules:[/cyan] {st.get('guardrails', '?')}",
+        title="[bold]Doctor Summary[/bold]",
+        border_style="green" if passed == total else "yellow",
+    ))
+
+
+# =========================================================================
+# CALLBACK + ENTRY POINT
 # =========================================================================
 
 
