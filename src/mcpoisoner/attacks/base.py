@@ -42,6 +42,9 @@ class AttackResult:
     llm_backend: str = ""
     agent_framework: str = ""
     timestamp: float = field(default_factory=time.time)
+    llm_raw_output: str = ""
+    error: str | None = None
+    iteration: int = 0
 
     @property
     def regulatory_trigger_rate(self) -> float:
@@ -92,6 +95,41 @@ class BaseAttack(ABC):
     @abstractmethod
     def get_regulatory_triggers(self) -> list[str]:
         """Return list of regulatory articles this attack could trigger."""
+
+    def _check_mcpshield(self, tool_descriptor: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+        """Run MCPShield on a tool descriptor. Returns (blocked, info_dict)."""
+        try:
+            from mcpshield.proxy.interceptor import MCPShieldProxy, InterceptionDecision
+
+            proxy = MCPShieldProxy()
+            result = proxy.register_tool(tool_descriptor)
+            blocked = result.decision == InterceptionDecision.BLOCK
+            layer = None
+            if blocked:
+                lr = result.layer_results
+                if "crypto_verification" in lr and not lr["crypto_verification"].get("valid", True):
+                    layer = "crypto"
+                elif "static_analysis" in lr and lr["static_analysis"].get("threat_level") == "blocked":
+                    layer = "static"
+                elif "runtime_monitor" in lr and lr["runtime_monitor"].get("decision") == "block":
+                    layer = "runtime"
+                elif "policy_engine" in lr and lr["policy_engine"].get("decision") == "deny":
+                    layer = "policy"
+            return blocked, {
+                "mcpshield_blocked": blocked,
+                "mcpshield_layer_triggered": layer,
+                "mcpshield_details": result.layer_results,
+            }
+        except Exception as e:
+            self.log.warning("mcpshield_check_failed", error=str(e))
+            return False, {"mcpshield_blocked": False, "mcpshield_error": str(e)}
+
+    async def _run_agent(self, tools: list, task: str):
+        """Run a real LLM agent with the given ToolDefs and task string."""
+        from mcpoisoner.frameworks import get_runner
+
+        runner = get_runner(self.config.agent_framework)
+        return await runner.run_with_retry(tools, task, self.config.llm_backend)
 
     async def run(self) -> list[AttackResult]:
         results: list[AttackResult] = []

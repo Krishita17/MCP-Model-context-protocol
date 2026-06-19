@@ -13,10 +13,12 @@ import structlog
 
 from mcpoisoner.attacks import ATTACK_REGISTRY
 from mcpoisoner.attacks.base import AttackConfig, AttackClass, AttackResult
+from mcpoisoner.backends import available_backends, is_backend_available
+from mcpoisoner.results.writer import write_run_result, write_aggregate_csv
 
 logger = structlog.get_logger()
 
-LLM_BACKENDS = ["gpt-4o", "claude-sonnet", "gemini-2.5", "llama-3.1-70b"]
+LLM_BACKENDS = ["gpt-4o", "claude-sonnet", "gemini-2.5", "llama-3.1-8b"]
 AGENT_FRAMEWORKS = ["langchain", "crewai", "autogen"]
 ATTACK_CLASSES = list(AttackClass)
 
@@ -27,7 +29,7 @@ class MatrixConfig:
     agent_frameworks: list[str] = field(default_factory=lambda: AGENT_FRAMEWORKS.copy())
     attack_classes: list[AttackClass] = field(default_factory=lambda: ATTACK_CLASSES.copy())
     iterations_per_config: int = 10
-    timeout_seconds: float = 30.0
+    timeout_seconds: float = 60.0
     output_dir: Path = Path("results")
     parallel_configs: int = 4
 
@@ -42,6 +44,8 @@ class MatrixResult:
     results_by_llm: dict[str, list[AttackResult]]
     results_by_framework: dict[str, list[AttackResult]]
     execution_time_seconds: float
+    skipped_backends: list[str] = field(default_factory=list)
+    error_count: int = 0
     timestamp: float = field(default_factory=time.time)
 
     @property
@@ -56,6 +60,8 @@ class MatrixResult:
             "completed": self.completed_configs,
             "overall_attack_success_rate": round(self.overall_asr, 4),
             "execution_time_seconds": round(self.execution_time_seconds, 2),
+            "skipped_backends": self.skipped_backends,
+            "errors": self.error_count,
             "by_attack_class": {
                 k: {
                     "total": len(v),
@@ -114,8 +120,41 @@ class AttackMatrixRunner:
 
     async def run_matrix(self) -> MatrixResult:
         start_time = time.monotonic()
+
+        # Filter to available backends
+        avail = set(available_backends())
+        skipped: list[str] = []
+        active_backends: list[str] = []
+        for b in self.config.llm_backends:
+            if is_backend_available(b):
+                active_backends.append(b)
+            else:
+                skipped.append(b)
+                self.log.warning("skipping_backend", backend=b, reason="API key not configured")
+
+        self.config.llm_backends = active_backends
+
+        if not active_backends:
+            self.log.error("no_backends_available")
+            return MatrixResult(
+                total_configs=0,
+                completed_configs=0,
+                total_attacks=0,
+                successful_attacks=0,
+                results_by_attack={},
+                results_by_llm={},
+                results_by_framework={},
+                execution_time_seconds=0,
+                skipped_backends=skipped,
+            )
+
         configs = self.generate_configs()
-        self.log.info("starting_attack_matrix", total_configs=len(configs))
+        self.log.info(
+            "starting_attack_matrix",
+            total_configs=len(configs),
+            backends=active_backends,
+            skipped=skipped,
+        )
 
         all_results: list[AttackResult] = []
         semaphore = asyncio.Semaphore(self.config.parallel_configs)
@@ -128,10 +167,21 @@ class AttackMatrixRunner:
         batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         completed = 0
-        for batch in batch_results:
+        error_count = 0
+        for i, batch in enumerate(batch_results):
             if isinstance(batch, list):
+                # Save per-run JSON for each result
+                for j, r in enumerate(batch):
+                    r.iteration = j + 1
+                    try:
+                        write_run_result(r, self.config.output_dir, iteration=j + 1)
+                    except Exception as e:
+                        self.log.warning("result_write_failed", error=str(e))
                 all_results.extend(batch)
                 completed += 1
+            else:
+                error_count += 1
+                self.log.error("config_exception", error=str(batch))
 
         results_by_attack: dict[str, list[AttackResult]] = {}
         results_by_llm: dict[str, list[AttackResult]] = {}
@@ -153,9 +203,19 @@ class AttackMatrixRunner:
             results_by_llm=results_by_llm,
             results_by_framework=results_by_framework,
             execution_time_seconds=elapsed,
+            skipped_backends=skipped,
+            error_count=error_count,
         )
 
         self.log.info("matrix_complete", summary=matrix_result.summary())
+
+        # Write aggregate CSV
+        try:
+            csv_path = write_aggregate_csv(all_results, self.config.output_dir)
+            self.log.info("aggregate_csv_saved", path=str(csv_path))
+        except Exception as e:
+            self.log.warning("csv_write_failed", error=str(e))
+
         return matrix_result
 
     async def save_results(self, result: MatrixResult, output_dir: Path | None = None) -> Path:

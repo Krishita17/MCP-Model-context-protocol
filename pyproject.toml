@@ -34,13 +34,6 @@ dependencies = [
     "pyyaml>=6.0.1",
     "jsonschema>=4.21.0",
     "scikit-learn>=1.4.0",
-    "spacy>=3.7.0",
-    "transformers>=4.38.0",
-    "torch>=2.2.0",
-    "langchain>=0.1.0",
-    "openai>=1.12.0",
-    "anthropic>=0.18.0",
-    "google-generativeai>=0.4.0",
     "rich>=13.7.0",
     "click>=8.1.0",
     "typer>=0.9.0",
@@ -48,6 +41,16 @@ dependencies = [
     "matplotlib>=3.8.0",
     "plotly>=5.19.0",
     "watchdog>=3.0.0",
+    "python-dotenv>=1.0.0",
+    "openai>=1.12.0",
+    "anthropic>=0.18.0",
+    "google-generativeai>=0.4.0",
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langchain-anthropic>=0.2.0",
+    "langchain-google-genai>=2.0.0",
+    "langchain-ollama>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -63,6 +66,16 @@ dev = [
 ]
 gui = [
     "pyside6>=6.7.0",
+]
+crewai = [
+    "crewai>=0.80.0",
+]
+autogen = [
+    "pyautogen>=0.2.0",
+]
+all-frameworks = [
+    "crewai>=0.80.0",
+    "pyautogen>=0.2.0",
 ]
 
 [project.scripts]
