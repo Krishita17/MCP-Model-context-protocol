@@ -57,7 +57,12 @@ def write_aggregate_csv(all_results: list[AttackResult], output_dir: Path) -> Pa
     rows: list[dict[str, Any]] = []
     for (attack, llm, framework), results in sorted(grouped.items()):
         n = len(results)
-        successes = sum(1 for r in results if r.success)
+        # Valid runs = those that actually produced an outcome (reached the LLM
+        # or were blocked pre-LLM). Errored runs have success=None and are
+        # EXCLUDED from the ASR denominator so a failed API call is never
+        # silently counted as a resisted attack.
+        valid = [r for r in results if r.success is not None]
+        successes = sum(1 for r in results if r.success is True)
         blocked = sum(1 for r in results if r.details.get("mcpshield_blocked"))
         ttds = [r.time_to_detection_ms for r in results if r.time_to_detection_ms is not None]
         exfil = sum(r.data_exfiltration_bytes for r in results)
@@ -70,8 +75,9 @@ def write_aggregate_csv(all_results: list[AttackResult], output_dir: Path) -> Pa
             "llm_backend": llm,
             "agent_framework": framework,
             "total_runs": n,
+            "valid_runs": len(valid),
             "successful_attacks": successes,
-            "mean_asr": round(successes / max(n, 1), 4),
+            "mean_asr": round(successes / len(valid), 4) if valid else "",
             "mcpshield_blocked": blocked,
             "mean_ttd_ms": round(sum(ttds) / max(len(ttds), 1), 2) if ttds else "",
             "total_exfil_bytes": exfil,

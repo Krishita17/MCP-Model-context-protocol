@@ -33,7 +33,9 @@ class Severity(str, Enum):
 @dataclass
 class AttackResult:
     attack_class: AttackClass
-    success: bool
+    # None = unknown (the LLM call errored, so we cannot say the attack
+    # succeeded or failed). True/False are only set from observed LLM behavior.
+    success: bool | None
     attack_success_rate: float
     time_to_detection_ms: float | None
     data_exfiltration_bytes: int
@@ -60,6 +62,10 @@ class AttackConfig:
     payload_variant: str = "default"
     iterations: int = 10
     timeout_seconds: float = 30.0
+    # Sampling temperature for the LLM. 0.0 = deterministic (identical output
+    # every iteration). Use >0 (e.g. 0.7) so each iteration is an independent
+    # sample and the attack-success-rate reflects real run-to-run variation.
+    temperature: float = 0.0
     custom_params: dict[str, Any] = field(default_factory=dict)
 
 
@@ -130,7 +136,12 @@ class BaseAttack(ABC):
         from mcpoisoner.frameworks import get_runner
 
         runner = get_runner(self.config.agent_framework)
-        return await runner.run_with_retry(tools, task, self.config.llm_backend)
+        return await runner.run_with_retry(
+            tools,
+            task,
+            self.config.llm_backend,
+            temperature=self.config.temperature,
+        )
 
     async def run(self) -> list[AttackResult]:
         results: list[AttackResult] = []
@@ -159,12 +170,15 @@ class BaseAttack(ABC):
                 results.append(
                     AttackResult(
                         attack_class=self.attack_class,
-                        success=False,
+                        success=None,  # unknown — the run errored, not a real outcome
                         attack_success_rate=0.0,
                         time_to_detection_ms=None,
                         data_exfiltration_bytes=0,
                         regulatory_triggers=[],
                         crypto_defense_effective=None,
+                        llm_backend=self.config.llm_backend,
+                        agent_framework=self.config.agent_framework,
+                        error=str(e),
                         details={"error": str(e)},
                     )
                 )

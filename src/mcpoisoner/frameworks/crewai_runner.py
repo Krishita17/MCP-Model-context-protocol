@@ -23,6 +23,7 @@ class CrewAIRunner(AgentRunner):
         tools: list[ToolDef],
         task: str,
         backend: str,
+        temperature: float = 0.0,
     ) -> AgentExecutionResult:
         try:
             from crewai import Agent, Crew, Task

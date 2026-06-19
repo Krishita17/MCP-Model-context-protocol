@@ -43,6 +43,7 @@ class AgentRunner(ABC):
         tools: list[ToolDef],
         task: str,
         backend: str,
+        temperature: float = 0.0,
     ) -> AgentExecutionResult:
         """Run an agent with the given tools and task."""
 
@@ -52,13 +53,14 @@ class AgentRunner(ABC):
         task: str,
         backend: str,
         max_retries: int = 3,
+        temperature: float = 0.0,
     ) -> AgentExecutionResult:
         import os
 
         last_error: Exception | None = None
         for attempt in range(max_retries + 1):
             try:
-                return await self.run(tools, task, backend)
+                return await self.run(tools, task, backend, temperature=temperature)
             except Exception as e:
                 last_error = e
                 # Strict mode: surface the real error (e.g. Ollama connection

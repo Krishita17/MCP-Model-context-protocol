@@ -36,13 +36,32 @@ def main() -> None:
 @click.option("--iterations", type=int, default=10, help="Number of iterations")
 @click.option("--output", type=click.Path(), default="results", help="Output directory")
 @click.option(
+    "--temperature",
+    type=float,
+    default=0.0,
+    help="LLM sampling temperature. 0=deterministic (identical every run); use 0.7 for run-to-run variation.",
+)
+@click.option(
     "--strict",
     is_flag=True,
     default=False,
     help="Crash loudly with full traceback on any failed LLM call (no silent fallback).",
 )
+@click.option(
+    "--show-output/--no-show-output",
+    default=True,
+    help="Print each iteration's raw LLM output and tool calls (default: on).",
+)
 def attack(
-    attack: str, llm: str, framework: str, variant: str, iterations: int, output: str, strict: bool
+    attack: str,
+    llm: str,
+    framework: str,
+    variant: str,
+    iterations: int,
+    output: str,
+    temperature: float,
+    strict: bool,
+    show_output: bool,
 ) -> None:
     """Run a single attack against a specific configuration."""
     if strict:
@@ -62,6 +81,7 @@ def attack(
         agent_framework=framework,
         payload_variant=variant,
         iterations=iterations,
+        temperature=temperature,
     )
 
     attack_cls = ATTACK_REGISTRY[attack]
@@ -69,7 +89,7 @@ def attack(
 
     console.print(f"\n[bold red]MCPoisoner[/bold red] — Executing {attack}")
     console.print(f"  Target: {llm} / {framework} / variant={variant}")
-    console.print(f"  Iterations: {iterations}")
+    console.print(f"  Iterations: {iterations}  |  Temperature: {temperature}")
     console.print(f"  Mode: [bold green]REAL LLM API CALLS[/bold green]\n")
 
     results = asyncio.run(instance.run())
@@ -77,10 +97,9 @@ def attack(
     table = Table(title="Attack Results")
     table.add_column("Iter", style="cyan")
     table.add_column("Success", style="red")
-    table.add_column("ASR", style="yellow")
     table.add_column("MCPShield", style="blue")
     table.add_column("Exfil (bytes)", style="magenta")
-    table.add_column("Regulatory", style="green")
+    table.add_column("Tools called", style="white")
     table.add_column("Error", style="dim")
 
     output_dir = Path(output)
@@ -92,15 +111,30 @@ def attack(
             pass
 
         shield_blocked = r.details.get("mcpshield_blocked", False)
+        if r.success is None:
+            success_cell = "[yellow]UNKNOWN (error)[/yellow]"
+        elif r.success:
+            success_cell = "[bold red]YES[/bold red]"
+        else:
+            success_cell = "NO"
+        tools_called = [c.get("name") for c in r.details.get("tool_calls", [])]
         table.add_row(
             str(i),
-            "[bold red]YES[/bold red]" if r.success else "NO",
-            f"{r.attack_success_rate:.0%}",
+            success_cell,
             "[blue]BLOCKED[/blue]" if shield_blocked else "passed",
             str(r.data_exfiltration_bytes),
-            str(len(r.regulatory_triggers)),
+            ", ".join(tools_called) if tools_called else "—",
             (r.error or "")[:40],
         )
+
+        # Check 3: make the real LLM output visible per iteration.
+        if show_output and not shield_blocked:
+            raw = (r.llm_raw_output or "").strip()
+            console.print(
+                f"  [dim]iter {i}[/dim] "
+                f"[bold]tools:[/bold] {tools_called or '—'}  "
+                f"[bold]LLM:[/bold] {raw[:200] or '[no output]'}"
+            )
 
     console.print(table)
 
@@ -112,14 +146,22 @@ def attack(
     except Exception:
         pass
 
-    # Summary
-    successes = sum(1 for r in results if r.success)
-    console.print(f"\n  Overall ASR: [bold]{successes}/{len(results)} = {successes/max(len(results),1):.0%}[/bold]")
+    # Summary — ASR is over VALID runs only (errored runs are unknown, excluded)
+    successes = sum(1 for r in results if r.success is True)
+    valid = sum(1 for r in results if r.success is not None)
+    errors = sum(1 for r in results if r.error)
+    asr = successes / valid if valid else 0.0
+    console.print(
+        f"\n  ASR (valid runs): [bold]{successes}/{valid} = {asr:.0%}[/bold]"
+        + (f"  |  [yellow]{errors} errored (excluded)[/yellow]" if errors else "")
+    )
     if any(r.llm_raw_output for r in results):
         console.print("  [green]✓ Real LLM responses captured[/green]")
-    if any(r.error for r in results):
-        errors = sum(1 for r in results if r.error)
-        console.print(f"  [yellow]⚠ {errors} iterations had errors[/yellow]")
+    if valid and successes == valid and valid > 1:
+        console.print(
+            "  [yellow]Note: 100% ASR across all valid runs. With temperature=0 this is "
+            "expected (deterministic). Use --temperature 0.7 for run-to-run variation.[/yellow]"
+        )
 
 
 @main.command()
@@ -133,13 +175,24 @@ def attack(
     help="Limit to specific agent framework(s). Repeatable. Default: all three.",
 )
 @click.option(
+    "--temperature",
+    type=float,
+    default=0.0,
+    help="LLM sampling temperature. 0=deterministic; use 0.7 for run-to-run variation.",
+)
+@click.option(
     "--strict",
     is_flag=True,
     default=False,
     help="Crash loudly with full traceback on any failed LLM call (no silent fallback).",
 )
 def matrix(
-    output: str, parallel: int, iterations: int, framework: tuple[str, ...], strict: bool
+    output: str,
+    parallel: int,
+    iterations: int,
+    framework: tuple[str, ...],
+    temperature: float,
+    strict: bool,
 ) -> None:
     """Run the full attack matrix (optionally limited to specific frameworks)."""
     if strict:
@@ -154,11 +207,12 @@ def matrix(
         return
 
     frameworks = list(framework) if framework else list(AGENT_FRAMEWORKS)
-    console.print(f"  Frameworks: {', '.join(frameworks)}")
+    console.print(f"  Frameworks: {', '.join(frameworks)}  |  Temperature: {temperature}")
 
     config = MatrixConfig(
         agent_frameworks=frameworks,
         iterations_per_config=iterations,
+        temperature=temperature,
         output_dir=Path(output),
         parallel_configs=parallel,
     )

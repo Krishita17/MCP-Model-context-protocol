@@ -29,6 +29,7 @@ class LangChainRunner(AgentRunner):
         tools: list[ToolDef],
         task: str,
         backend: str,
+        temperature: float = 0.0,
     ) -> AgentExecutionResult:
         from langchain_core.messages import (
             AIMessage,
@@ -38,7 +39,7 @@ class LangChainRunner(AgentRunner):
         )
         from langchain_core.tools import StructuredTool
 
-        llm = self._create_llm(backend)
+        llm = self._create_llm(backend, temperature)
 
         # Build LangChain tool specs (for the schema the model sees) and a name→func
         # map (for us to actually execute the call the model requests).
@@ -110,7 +111,7 @@ class LangChainRunner(AgentRunner):
         )
 
     @staticmethod
-    def _create_llm(backend: str) -> Any:
+    def _create_llm(backend: str, temperature: float = 0.0) -> Any:
         cfg = get_backend_config(backend)
         provider = cfg["provider"]
         model = cfg["model"]
@@ -121,7 +122,7 @@ class LangChainRunner(AgentRunner):
             return ChatOpenAI(
                 model=model,
                 api_key=os.environ.get("OPENAI_API_KEY"),
-                temperature=0.0,
+                temperature=temperature,
             )
         if provider == "anthropic":
             from langchain_anthropic import ChatAnthropic
@@ -129,7 +130,7 @@ class LangChainRunner(AgentRunner):
             return ChatAnthropic(
                 model=model,
                 api_key=os.environ.get("ANTHROPIC_API_KEY"),
-                temperature=0.0,
+                temperature=temperature,
             )
         if provider == "google":
             from langchain_google_genai import ChatGoogleGenerativeAI
@@ -137,12 +138,12 @@ class LangChainRunner(AgentRunner):
             return ChatGoogleGenerativeAI(
                 model=model,
                 google_api_key=os.environ.get("GOOGLE_API_KEY"),
-                temperature=0.0,
+                temperature=temperature,
             )
         if provider == "ollama":
             from langchain_ollama import ChatOllama
 
             base_url = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-            return ChatOllama(model=model, temperature=0.0, base_url=base_url)
+            return ChatOllama(model=model, temperature=temperature, base_url=base_url)
 
         raise ValueError(f"Unknown provider: {provider}")

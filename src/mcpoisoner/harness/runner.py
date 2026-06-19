@@ -30,6 +30,7 @@ class MatrixConfig:
     attack_classes: list[AttackClass] = field(default_factory=lambda: ATTACK_CLASSES.copy())
     iterations_per_config: int = 10
     timeout_seconds: float = 60.0
+    temperature: float = 0.0
     output_dir: Path = Path("results")
     parallel_configs: int = 4
 
@@ -46,13 +47,16 @@ class MatrixResult:
     execution_time_seconds: float
     skipped_backends: list[str] = field(default_factory=list)
     error_count: int = 0
+    valid_attacks: int = 0
     timestamp: float = field(default_factory=time.time)
 
     @property
     def overall_asr(self) -> float:
-        if self.total_attacks == 0:
+        # ASR over runs that produced a real outcome (errored runs excluded).
+        denom = self.valid_attacks or self.total_attacks
+        if denom == 0:
             return 0.0
-        return self.successful_attacks / self.total_attacks
+        return self.successful_attacks / denom
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -65,16 +69,26 @@ class MatrixResult:
             "by_attack_class": {
                 k: {
                     "total": len(v),
-                    "successful": sum(1 for r in v if r.success),
-                    "asr": round(sum(1 for r in v if r.success) / max(len(v), 1), 4),
+                    "valid": sum(1 for r in v if r.success is not None),
+                    "successful": sum(1 for r in v if r.success is True),
+                    "asr": round(
+                        sum(1 for r in v if r.success is True)
+                        / max(sum(1 for r in v if r.success is not None), 1),
+                        4,
+                    ),
                 }
                 for k, v in self.results_by_attack.items()
             },
             "by_llm_backend": {
                 k: {
                     "total": len(v),
-                    "successful": sum(1 for r in v if r.success),
-                    "asr": round(sum(1 for r in v if r.success) / max(len(v), 1), 4),
+                    "valid": sum(1 for r in v if r.success is not None),
+                    "successful": sum(1 for r in v if r.success is True),
+                    "asr": round(
+                        sum(1 for r in v if r.success is True)
+                        / max(sum(1 for r in v if r.success is not None), 1),
+                        4,
+                    ),
                 }
                 for k, v in self.results_by_llm.items()
             },
@@ -98,6 +112,7 @@ class AttackMatrixRunner:
                             agent_framework=framework,
                             iterations=self.config.iterations_per_config,
                             timeout_seconds=self.config.timeout_seconds,
+                            temperature=self.config.temperature,
                         )
                     )
         return configs
@@ -198,7 +213,8 @@ class AttackMatrixRunner:
             total_configs=len(configs),
             completed_configs=completed,
             total_attacks=len(all_results),
-            successful_attacks=sum(1 for r in all_results if r.success),
+            successful_attacks=sum(1 for r in all_results if r.success is True),
+            valid_attacks=sum(1 for r in all_results if r.success is not None),
             results_by_attack=results_by_attack,
             results_by_llm=results_by_llm,
             results_by_framework=results_by_framework,

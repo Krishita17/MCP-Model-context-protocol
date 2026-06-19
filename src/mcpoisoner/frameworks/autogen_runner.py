@@ -23,6 +23,7 @@ class AutoGenRunner(AgentRunner):
         tools: list[ToolDef],
         task: str,
         backend: str,
+        temperature: float = 0.0,
     ) -> AgentExecutionResult:
         try:
             from autogen import AssistantAgent, UserProxyAgent, register_function
