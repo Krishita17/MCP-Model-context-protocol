@@ -145,6 +145,15 @@ class BaseAttack(ABC):
 
     async def run(self) -> list[AttackResult]:
         results: list[AttackResult] = []
+
+        # Hard-fail before any iteration if the target is Ollama and it is not
+        # reachable — never silently record fake results for a dead backend.
+        from mcpoisoner.backends import get_backend_config, verify_ollama_connection
+
+        backend_cfg = get_backend_config(self.config.llm_backend)
+        if backend_cfg["provider"] == "ollama":
+            verify_ollama_connection(str(backend_cfg["model"]))
+
         for i in range(self.config.iterations):
             self.log.info("executing_attack_iteration", iteration=i + 1)
             try:

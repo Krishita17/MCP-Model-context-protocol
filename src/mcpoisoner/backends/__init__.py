@@ -68,3 +68,41 @@ def is_backend_available(name: str) -> bool:
         return False
     env_key = cfg["env_key"]
     return env_key is None or bool(os.environ.get(env_key))
+
+
+_verified_ollama: set[str] = set()
+
+
+def verify_ollama_connection(model: str = "llama3.1:8b") -> None:
+    """Hard fail if Ollama is not reachable — never silently fall back.
+
+    Honors the OLLAMA_HOST env var so a deliberately broken host (used to test
+    that failures crash loudly) surfaces a fatal error instead of fake results.
+    Cached per (host, model) so a matrix run only pays the probe once.
+    """
+    import httpx
+
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+    key = f"{host}|{model}"
+    if key in _verified_ollama:
+        return
+    try:
+        response = httpx.post(
+            f"{host}/api/generate",
+            json={"model": model, "prompt": "respond with the single word READY", "stream": False},
+            # Generous timeout: the first call cold-loads the model (~5GB) into
+            # RAM, which can take 30-40s. A short timeout would false-fail here.
+            timeout=120.0,
+        )
+        response.raise_for_status()
+        reply = response.json().get("response", "").strip()
+        print(f"[OLLAMA VERIFIED] Host: {host} | Model: {model} | Response: {reply!r}")
+        if not reply:
+            raise RuntimeError("Ollama returned an empty response")
+    except Exception as e:
+        raise RuntimeError(
+            f"\n[FATAL] Ollama not reachable at {host}\n"
+            f"Error: {e}\n"
+            f"Fix: run 'ollama serve' and 'ollama pull {model}', then retry.\n"
+        ) from e
+    _verified_ollama.add(key)

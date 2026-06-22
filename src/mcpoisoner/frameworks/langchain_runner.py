@@ -68,21 +68,27 @@ class LangChainRunner(AgentRunner):
         ]
 
         tool_calls_log: list[dict[str, Any]] = []
+        reasoning: list[str] = []
         final_output = ""
 
-        for _ in range(MAX_TOOL_ITERATIONS):
+        for step in range(MAX_TOOL_ITERATIONS):
             ai_msg: AIMessage = await llm_with_tools.ainvoke(messages)
             messages.append(ai_msg)
 
+            # Capture the model's own words at this step (its reasoning/answer).
+            content = ai_msg.content if isinstance(ai_msg.content, str) else str(ai_msg.content)
+            if content:
+                reasoning.append(f"[LLM THOUGHT {step + 1}]: {content}")
+
             calls = getattr(ai_msg, "tool_calls", None) or []
             if not calls:
-                content = ai_msg.content
-                final_output = content if isinstance(content, str) else str(content)
+                final_output = content
                 break
 
             for tc in calls:
                 name = tc.get("name", "")
                 args = tc.get("args", {}) or {}
+                reasoning.append(f"[TOOL CALL]: {name}({args})")
                 func = tool_map.get(name)
                 if func is None:
                     result = f"Error: unknown tool '{name}'"
@@ -91,6 +97,7 @@ class LangChainRunner(AgentRunner):
                         result = func(**args)
                     except Exception as e:  # tool execution error — feed back to model
                         result = f"Error executing {name}: {e}"
+                reasoning.append(f"[TOOL RESULT]: {str(result)[:200]}")
                 tool_calls_log.append(
                     {"name": name, "args": args, "output": str(result)}
                 )
@@ -106,6 +113,7 @@ class LangChainRunner(AgentRunner):
             final_output = str(getattr(last, "content", "") or "")
 
         return AgentExecutionResult(
+            reasoning_chain="\n".join(reasoning),
             tool_calls=tool_calls_log,
             final_output=final_output,
         )

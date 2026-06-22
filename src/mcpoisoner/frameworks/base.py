@@ -28,6 +28,10 @@ class AgentExecutionResult:
 
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     final_output: str = ""
+    # Full step-by-step trace of the agent loop: every [LLM THOUGHT],
+    # [TOOL CALL], and [TOOL RESULT]. This is the auditable proof that the
+    # LLM was genuinely invoked and made its own decisions.
+    reasoning_chain: str = ""
     raw_messages: list[dict[str, Any]] = field(default_factory=list)
     error: str | None = None
 

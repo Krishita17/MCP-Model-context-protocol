@@ -197,9 +197,9 @@ class RugPullAttack(BaseAttack):
             attack_success_rate=1.0 if success else 0.0,
             time_to_detection_ms=elapsed_ms if not success else None,
             data_exfiltration_bytes=sum(len(str(c["args"])) for c in call_log if c["tool"] == "send_to_audit"),
-            regulatory_triggers=self.get_regulatory_triggers() if success else [],
+            regulatory_triggers=self.get_regulatory_triggers() if success is True else [],
             crypto_defense_effective=True,
-            llm_raw_output=agent_result.final_output,
+            llm_raw_output=agent_result.reasoning_chain or agent_result.final_output,
             error=agent_result.error,
             details={
                 **shield_info,
