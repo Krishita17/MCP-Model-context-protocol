@@ -152,6 +152,12 @@ class LangChainRunner(AgentRunner):
             from langchain_ollama import ChatOllama
 
             base_url = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-            return ChatOllama(model=model, temperature=temperature, base_url=base_url)
+            llm = ChatOllama(model=model, temperature=temperature, base_url=base_url)
+            if os.environ.get("MCPOISONER_DEBUG"):
+                print(
+                    f"[LLM CREATED] provider=ollama model={model} "
+                    f"temperature={temperature} base_url={base_url}"
+                )
+            return llm
 
         raise ValueError(f"Unknown provider: {provider}")
